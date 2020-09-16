@@ -124,26 +124,27 @@
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
           "actions": {
             "Execute_a_SQL_query_(V2)": {
+              "type": "ApiConnection",
               "inputs": {
-                "body": {
-                  "query": "select * from UserRatings where ID ='@{variables('RowId')}'"
-                },
                 "host": {
                   "connection": {
                     "name": "@parameters('$connections')['sql']['connectionId']"
                   }
                 },
                 "method": "post",
+                "body": {
+                  "query": "select * from UserRatings where ID ='@{variables('RowId')}'"
+                },
                 "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('team32sql.database.windows.net'))},@{encodeURIComponent(encodeURIComponent('team32sql'))}/query/sql"
               },
               "runAfter": {
                 "Initialize_variable": [
                   "Succeeded"
                 ]
-              },
-              "type": "ApiConnection"
+              }
             },
             "Initialize_variable": {
+              "type": "InitializeVariable",
               "inputs": {
                 "variables": [
                   {
@@ -153,24 +154,50 @@
                   }
                 ]
               },
-              "runAfter": {},
-              "type": "InitializeVariable"
+              "runAfter": {}
             },
-            "Response": {
-              "inputs": {
-                "body": "@body('Execute_a_SQL_query_(V2)')",
-                "statusCode": 200
+            "Condition": {
+              "type": "If",
+              "expression": {
+                "or": [
+                  {
+                    "contains": [
+                      "@body('Execute_a_SQL_query_(V2)')?['resultsets']",
+                      "@variables('RowId')"
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Response": {
+                  "type": "Response",
+                  "inputs": {
+                    "statusCode": 200,
+                    "body": "@body('Execute_a_SQL_query_(V2)')"
+                  },
+                  "runAfter": {}
+                }
               },
               "runAfter": {
                 "Execute_a_SQL_query_(V2)": [
                   "Succeeded"
                 ]
               },
-              "type": "Response"
+              "else": {
+                "actions": {
+                  "Response_2": {
+                    "type": "Response",
+                    "kind": "http",
+                    "inputs": {
+                      "statusCode": 204,
+                      "body": "Content not found"
+                    },
+                    "runAfter": {}
+                  }
+                }
+              }
             }
           },
-          "contentVersion": "1.0.0.0",
-          "outputs": {},
           "parameters": {
             "$connections": {
               "defaultValue": {},
@@ -183,14 +210,16 @@
           },
           "triggers": {
             "request": {
-              "inputs": {
-                "method": "GET",
-                "schema": {}
-              },
+              "type": "Request",
               "kind": "Http",
-              "type": "Request"
+              "inputs": {
+                "schema": {},
+                "method": "GET"
+              }
             }
-          }
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {}
         },
         "parameters": {
           "$connections": {
