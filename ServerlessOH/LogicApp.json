@@ -123,6 +123,47 @@
         "definition": {
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
           "actions": {
+            "Condition": {
+              "type": "If",
+              "expression": {
+                "or": [
+                  {
+                    "equals": [
+                      "@empty(body('Execute_a_SQL_query_(V2)')?['resultsets'])",
+                      "@false"
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Response": {
+                  "type": "Response",
+                  "inputs": {
+                    "statusCode": 200,
+                    "body": "@body('Execute_a_SQL_query_(V2)')?['resultsets']['Table1']"
+                  },
+                  "runAfter": {}
+                }
+              },
+              "runAfter": {
+                "Execute_a_SQL_query_(V2)": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {
+                  "Response_2": {
+                    "type": "Response",
+                    "kind": "Http",
+                    "inputs": {
+                      "statusCode": 204,
+                      "body": "Content not found"
+                    },
+                    "runAfter": {}
+                  }
+                }
+              }
+            },
             "Execute_a_SQL_query_(V2)": {
               "type": "ApiConnection",
               "inputs": {
@@ -155,47 +196,6 @@
                 ]
               },
               "runAfter": {}
-            },
-            "Condition": {
-              "type": "If",
-              "expression": {
-                "or": [
-                  {
-                    "contains": [
-                      "@body('Execute_a_SQL_query_(V2)')?['resultsets']",
-                      "@variables('RowId')"
-                    ]
-                  }
-                ]
-              },
-              "actions": {
-                "Response": {
-                  "type": "Response",
-                  "inputs": {
-                    "statusCode": 200,
-                    "body": "@body('Execute_a_SQL_query_(V2)')"
-                  },
-                  "runAfter": {}
-                }
-              },
-              "runAfter": {
-                "Execute_a_SQL_query_(V2)": [
-                  "Succeeded"
-                ]
-              },
-              "else": {
-                "actions": {
-                  "Response_2": {
-                    "type": "Response",
-                    "kind": "http",
-                    "inputs": {
-                      "statusCode": 204,
-                      "body": "Content not found"
-                    },
-                    "runAfter": {}
-                  }
-                }
-              }
             }
           },
           "parameters": {
