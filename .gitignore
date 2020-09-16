@@ -3,3 +3,5 @@
 ################################################################################
 
 /.vs
+/ServerlessOH/obj/Debug
+/ServerlessOH/bin/Debug/staging/ServerlessOH
