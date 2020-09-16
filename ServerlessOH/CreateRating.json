@@ -1,0 +1,315 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "actions": {
+      "Condition": {
+        "actions": {
+          "Response": {
+            "inputs": {
+              "body": "@body('Execute_a_SQL_query_(V2)_2')?['resultsets']['Table1']",
+              "statusCode": 200
+            },
+            "runAfter": {},
+            "type": "Response"
+          }
+        },
+        "else": {
+          "actions": {
+            "Response_2": {
+              "inputs": {
+                "body": "Content not found",
+                "statusCode": 204
+              },
+              "kind": "Http",
+              "runAfter": {},
+              "type": "Response"
+            }
+          }
+        },
+        "expression": {
+          "or": [
+            {
+              "equals": [
+                "@empty(body('Execute_a_SQL_query_(V2)_2')?['resultsets'])",
+                "@false"
+              ]
+            }
+          ]
+        },
+        "runAfter": {
+          "Execute_a_SQL_query_(V2)_2": [
+            "Succeeded"
+          ]
+        },
+        "type": "If"
+      },
+      "Condition_2": {
+        "actions": {
+          "Response_3": {
+            "inputs": {
+              "body": "Bad Data",
+              "statusCode": 400
+            },
+            "kind": "Http",
+            "runAfter": {},
+            "type": "Response"
+          },
+          "Terminate": {
+            "inputs": {
+              "runStatus": "Succeeded"
+            },
+            "runAfter": {
+              "Response_3": [
+                "Succeeded"
+              ]
+            },
+            "type": "Terminate"
+          }
+        },
+        "else": {
+          "actions": {
+            "Condition_3": {
+              "actions": {
+                "Response_4": {
+                  "inputs": {
+                    "body": "Invalid User ID",
+                    "statusCode": 400
+                  },
+                  "kind": "Http",
+                  "runAfter": {},
+                  "type": "Response"
+                },
+                "Terminate_2": {
+                  "inputs": {
+                    "runError": {
+                      "code": "400",
+                      "message": "Invalid User"
+                    },
+                    "runStatus": "Failed"
+                  },
+                  "runAfter": {
+                    "Response_4": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Terminate"
+                }
+              },
+              "else": {
+                "actions": {
+                  "Condition_4": {
+                    "actions": {
+                      "Response_5": {
+                        "inputs": {
+                          "body": "Bad Product ID",
+                          "statusCode": 400
+                        },
+                        "kind": "Http",
+                        "runAfter": {},
+                        "type": "Response"
+                      },
+                      "Terminate_3": {
+                        "inputs": {
+                          "runStatus": "Succeeded"
+                        },
+                        "runAfter": {
+                          "Response_5": [
+                            "Succeeded"
+                          ]
+                        },
+                        "type": "Terminate"
+                      }
+                    },
+                    "expression": {
+                      "and": [
+                        {
+                          "not": {
+                            "equals": [
+                              "@outputs('ValidateProductID')['statusCode']",
+                              200
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "runAfter": {
+                      "ValidateProductID": [
+                        "Succeeded",
+                        "Failed"
+                      ]
+                    },
+                    "type": "If"
+                  },
+                  "ValidateProductID": {
+                    "inputs": {
+                      "method": "GET",
+                      "uri": "https://serverlessohproduct.trafficmanager.net/api/GetProduct?productId=@{triggerBody()?['productId']}"
+                    },
+                    "runAfter": {},
+                    "type": "Http"
+                  }
+                }
+              },
+              "expression": {
+                "and": [
+                  {
+                    "not": {
+                      "equals": [
+                        "@outputs('ValidateUserID')['statusCode']",
+                        200
+                      ]
+                    }
+                  }
+                ]
+              },
+              "runAfter": {
+                "ValidateUserID": [
+                  "Succeeded",
+                  "Failed"
+                ]
+              },
+              "type": "If"
+            },
+            "ValidateUserID": {
+              "inputs": {
+                "method": "GET",
+                "uri": "https://serverlessohuser.trafficmanager.net/api/GetUser?userId=@{triggerBody()?['userId']}"
+              },
+              "runAfter": {},
+              "type": "Http"
+            }
+          }
+        },
+        "expression": {
+          "or": [
+            {
+              "equals": [
+                "@triggerBody()?['rating']",
+                "@null"
+              ]
+            },
+            {
+              "greater": [
+                "@triggerBody()?['rating']",
+                5
+              ]
+            },
+            {
+              "less": [
+                "@triggerBody()?['rating']",
+                0
+              ]
+            }
+          ]
+        },
+        "runAfter": {},
+        "type": "If"
+      },
+      "Execute_a_SQL_query_(V2)": {
+        "inputs": {
+          "body": {
+            "query": "insert into userratings (id,userid,productid,locationname,rating,usernotes)\n\n values ('@{variables('id')}','@{triggerBody()?['userId']}','@{triggerBody()?['productId']}','@{triggerBody()?['locationName']}',@{triggerBody()?['rating']},'@{triggerBody()?['userNotes']}');"
+          },
+          "host": {
+            "connection": {
+              "name": "@parameters('$connections')['sql']['connectionId']"
+            }
+          },
+          "method": "post",
+          "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('team32sql.database.windows.net'))},@{encodeURIComponent(encodeURIComponent('team32sql'))}/query/sql"
+        },
+        "runAfter": {
+          "Initialize_variable": [
+            "Succeeded"
+          ]
+        },
+        "type": "ApiConnection"
+      },
+      "Execute_a_SQL_query_(V2)_2": {
+        "inputs": {
+          "body": {
+            "query": "select * from userratings where id = '@{variables('id')}'"
+          },
+          "host": {
+            "connection": {
+              "name": "@parameters('$connections')['sql']['connectionId']"
+            }
+          },
+          "method": "post",
+          "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('team32sql.database.windows.net'))},@{encodeURIComponent(encodeURIComponent('team32sql'))}/query/sql"
+        },
+        "runAfter": {
+          "Execute_a_SQL_query_(V2)": [
+            "Succeeded"
+          ]
+        },
+        "type": "ApiConnection"
+      },
+      "Initialize_variable": {
+        "inputs": {
+          "variables": [
+            {
+              "name": "id",
+              "type": "string",
+              "value": "@{guid()}"
+            }
+          ]
+        },
+        "runAfter": {
+          "Condition_2": [
+            "Succeeded"
+          ]
+        },
+        "type": "InitializeVariable"
+      }
+    },
+    "contentVersion": "1.0.0.0",
+    "outputs": {},
+    "parameters": {
+      "$connections": {
+        "defaultValue": {},
+        "type": "Object"
+      }
+    },
+    "triggers": {
+      "request": {
+        "inputs": {
+          "method": "POST",
+          "schema": {
+            "properties": {
+              "locationName": {
+                "type": "string"
+              },
+              "productId": {
+                "type": "string"
+              },
+              "rating": {
+                "type": "integer"
+              },
+              "userId": {
+                "type": "string"
+              },
+              "userNotes": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "kind": "Http",
+        "type": "Request"
+      }
+    }
+  },
+  "parameters": {
+    "$connections": {
+      "value": {
+        "sql": {
+          "connectionId": "/subscriptions/928af59a-1cfb-4902-9eeb-efde471b8a21/resourceGroups/OpenHackRG/providers/Microsoft.Web/connections/sql",
+          "connectionName": "sql",
+          "id": "/subscriptions/928af59a-1cfb-4902-9eeb-efde471b8a21/providers/Microsoft.Web/locations/westus/managedApis/sql"
+        }
+      }
+    }
+  }
+}

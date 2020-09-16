@@ -1,0 +1,114 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "actions": {
+      "Condition": {
+        "actions": {
+          "Response": {
+            "inputs": {
+              "body": "@body('Execute_a_SQL_query_(V2)')?['resultsets']['Table1']",
+              "statusCode": 200
+            },
+            "runAfter": {},
+            "type": "Response"
+          }
+        },
+        "else": {
+          "actions": {
+            "Response_2": {
+              "inputs": {
+                "body": "Content not found",
+                "statusCode": 204
+              },
+              "kind": "Http",
+              "runAfter": {},
+              "type": "Response"
+            }
+          }
+        },
+        "expression": {
+          "or": [
+            {
+              "equals": [
+                "@empty(body('Execute_a_SQL_query_(V2)')?['resultsets'])",
+                "@false"
+              ]
+            }
+          ]
+        },
+        "runAfter": {
+          "Execute_a_SQL_query_(V2)": [
+            "Succeeded"
+          ]
+        },
+        "type": "If"
+      },
+      "Execute_a_SQL_query_(V2)": {
+        "inputs": {
+          "body": {
+            "query": "select * from UserRatings where userid ='@{variables('userid')}'"
+          },
+          "host": {
+            "connection": {
+              "name": "@parameters('$connections')['sql']['connectionId']"
+            }
+          },
+          "method": "post",
+          "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('team32sql.database.windows.net'))},@{encodeURIComponent(encodeURIComponent('team32sql'))}/query/sql"
+        },
+        "runAfter": {
+          "Initialize_variable": [
+            "Succeeded"
+          ]
+        },
+        "type": "ApiConnection"
+      },
+      "Initialize_variable": {
+        "inputs": {
+          "variables": [
+            {
+              "name": "userid",
+              "type": "string",
+              "value": "@{triggerOutputs()['queries']['userid']}"
+            }
+          ]
+        },
+        "runAfter": {},
+        "type": "InitializeVariable"
+      }
+    },
+    "contentVersion": "1.0.0.0",
+    "outputs": {},
+    "parameters": {
+      "$connections": {
+        "defaultValue": {},
+        "type": "Object"
+      },
+      "Id": {
+        "defaultValue": "\"\"",
+        "type": "String"
+      }
+    },
+    "triggers": {
+      "request": {
+        "inputs": {
+          "method": "GET",
+          "schema": {}
+        },
+        "kind": "Http",
+        "type": "Request"
+      }
+    }
+  },
+  "parameters": {
+    "$connections": {
+      "value": {
+        "sql": {
+          "connectionId": "/subscriptions/928af59a-1cfb-4902-9eeb-efde471b8a21/resourceGroups/OpenHackRG/providers/Microsoft.Web/connections/sql",
+          "connectionName": "sql",
+          "id": "/subscriptions/928af59a-1cfb-4902-9eeb-efde471b8a21/providers/Microsoft.Web/locations/westus/managedApis/sql"
+        }
+      }
+    }
+  }
+}

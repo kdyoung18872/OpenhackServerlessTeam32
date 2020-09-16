@@ -27,8 +27,12 @@
       <Visible>False</Visible>
     </None>
     <Content Include="Deploy-AzureResourceGroup.ps1" />
-    <Content Include="LogicApp.json" />
-    <Content Include="LogicApp.parameters.json" />
+    <Content Include="CreateRating.json" />
+    <Content Include="CreateRating.parameters.json" />
+    <Content Include="GetRatings.json" />
+    <Content Include="GetRatings.parameters.json" />
+    <Content Include="GetRatingSLOHT32.json" />
+    <Content Include="GetRatingSLOHT32.parameters.json" />
   </ItemGroup>
   <Target Name="GetReferenceAssemblyPaths" />
 </Project>

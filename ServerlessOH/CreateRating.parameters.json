@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "value": "CreateRating"
+    },
+    "sql_1_privacySetting": {
+      "value": "Public"
+    },
+    "sql_1_server": {
+      "value": "team32sql.database.windows.net"
+    },
+    "sql_1_database": {
+      "value": "team32sql"
+    },
+    "sql_1_username": {
+      "value": "Hacker3"
+    },
+    "sql_1_password": {
+      "value": "Openhack21"
+    },
+    "sql_1_encryptConnection": {
+      "value": true
+    },
+    "sql_1_sqlConnectionString": {
+      "value": "SQL"
+    }
+  }
+}
